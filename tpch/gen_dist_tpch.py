@@ -6,12 +6,12 @@ Usage: ./gen_dist_tpch.py --help
 """
 import argparse
 import math
-from datetime import datetime
-
 import numpy as np
 import os
 import pandas as pd
 import sqlite3
+
+from datetime import datetime
 
 
 def generate_equal_split(df, n):
@@ -50,6 +50,12 @@ def datagen(args):
     # get table names
     tbl_names = pd.read_sql("SELECT name FROM sqlite_master WHERE type='table'", conn)
 
+    # gen suffix
+    if args.suffix == "ts":
+        suffix = datetime.now().strftime("%Y%m%d%H%M%S")
+    else:
+        suffix = args.suffix
+
     # N
     dest_dir_names = []
     for i in range(args.N):
@@ -77,11 +83,6 @@ def datagen(args):
                 raise ValueError(f"Invalid dist value: {args.dist}")
 
             for i, df in enumerate(df_splits):
-                if args.suffix == "ts":
-                    suffix = datetime.now().strftime("%Y%m%d%H%M%S")
-                else:
-                    suffix = args.suffix
-
                 file_name = f"{tbl_name.name.lower()}-{args.dist}"
                 if suffix != "":
                     file_name += f"-{suffix}"
@@ -102,8 +103,8 @@ if __name__ == "__main__":
 
     parser.add_argument("--db_path", required=True, help="base dest path")
     parser.add_argument("--N", default=3, help="how many storage nodes")
-    parser.add_argument("--suffix", default="ts", help='suffix for the generated file, default to timestamp, pass "" '
-                                                       'for empty')
+    parser.add_argument("--suffix", default="ts",
+                        help='suffix for the generated file, default to timestamp, pass "" for empty')
     parser.add_argument("--dist", default="equal", choices=['equal', 'left', 'right', 'random'],
                         help="the data distribution")
     parser.add_argument("--out_format", default="csv", choices=['parquet', 'csv'], help="format of the generated data")
